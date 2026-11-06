@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Platform Wars</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f3ef;
+  --surface-1: #fcfcfb;
+  --surface-2: #efeee9;
+  --border: #dddcd5;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7974;
+  --grid: #e6e5df;
+  --series-me: #2a78d6;
+  --series-opp: #eb6834;
+  --accent: #2a78d6;
+  --accent-ink: #ffffff;
+  --good: #1f7a3a;
+  --bad: #b3261e;
+  --warn-bg: #fff4d6;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface-1: #1a1a19;
+    --surface-2: #242422;
+    --border: #34332f;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #918f86;
+    --grid: #2c2b28;
+    --series-me: #3987e5;
+    --series-opp: #d95926;
+    --accent: #3987e5;
+    --good: #5cc27a;
+    --bad: #ff8a80;
+    --warn-bg: #3a3014;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text-primary); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+.narrow { max-width: 560px; }
+h1 { font-size: 28px; margin: 8px 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 20px; margin: 0 0 8px; }
+h3 { font-size: 16px; margin: 0 0 8px; }
+p { margin: 0 0 10px; }
+.muted { color: var(--text-muted); }
+.secondary { color: var(--text-secondary); }
+.small { font-size: 13px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 0 0 14px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.spacer { flex: 1; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+label { display: block; font-weight: 600; margin: 10px 0 4px; }
+input[type=text], select { width: 100%; padding: 10px 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); }
+button, .btn { display: inline-block; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; }
+button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.danger { color: var(--bad); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.big { width: 100%; padding: 14px; font-size: 17px; margin-top: 12px; }
+button.sm { padding: 5px 10px; font-size: 13px; }
+.err { color: var(--bad); margin-top: 8px; min-height: 1.2em; }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); }
+.topbar { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.topbar .title { font-weight: 700; font-size: 18px; }
+
+/* stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+.tile .k { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.tile .v { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile .d { font-size: 12px; color: var(--text-muted); }
+
+/* decisions */
+.decision { padding: 12px 0; border-top: 1px solid var(--border); }
+.decision:first-of-type { border-top: 0; }
+.decision .head { display: flex; align-items: baseline; gap: 8px; }
+.decision .head .name { font-weight: 700; }
+.decision .head .val { margin-left: auto; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.decision input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: var(--accent); height: 28px; }
+.decision .range { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+.pros { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+.pros b { color: var(--text-primary); }
+.note { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--text-secondary); }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.tablewrap { overflow-x: auto; }
+.delta { font-size: 12px; color: var(--text-muted); display: block; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
+.sw-me { background: var(--series-me); }
+.sw-opp { background: var(--series-opp); }
+.pos { color: var(--good); }
+.neg { color: var(--bad); }
+
+/* charts */
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .axis text, .chart .lbl { fill: var(--text-muted); font-size: 11px; }
+.chart .gridline { stroke: var(--grid); stroke-width: 1; }
+.chart .zero { stroke: var(--text-muted); stroke-width: 1; }
+.chart .legend { display: flex; gap: 14px; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.chart .tip { position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.12); white-space: nowrap; display: none; z-index: 2; }
+.chart .cross { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; }
+
+/* waiting */
+.waiting { text-align: center; padding: 40px 16px; }
+.dots::after { content: ''; animation: dots 1.4s steps(4, end) infinite; }
+@keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+.banner { background: var(--warn-bg); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; }
+ol.reflect li { margin-bottom: 8px; }
+
+/* instructor */
+.qr { background: #fff; padding: 12px; border-radius: 10px; display: inline-block; }
+.qr img { display: block; width: 220px; height: 220px; image-rendering: pixelated; }
+.code { font-size: 44px; font-weight: 800; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--text-muted); }
+.dot.on { background: var(--good); }
+.ok { color: var(--good); font-weight: 700; }
+.grid2 > *, .card, .tablewrap { min-width: 0; }
+@media (max-width: 520px) {
+  .wrap { padding: 10px; }
+  .card { padding: 12px; }
+  th, td { padding: 6px 5px; font-size: 13px; }
+  .tile .v { font-size: 20px; }
+}
+
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="muted">Loading…</p></div>
+<noscript><p>Please enable JavaScript to play.</p></noscript>
+<script>
+window.Engine = (function(){var module={exports:{}},exports=module.exports;var require=function(n){return {}[n];};
+// Platform Wars — market simulation engine (pure functions, no I/O).
+// Every formula here is documented in MODEL.md. Change parameters in MARKETS only.
+'use strict';
+
+const MARKETS = {
+  ride: {
+    id: 'ride',
+    name: 'Ride-Sharing',
+    userLabel: 'Riders',
+    partnerLabel: 'Drivers',
+    unitNote: 'riders and drivers in thousands; money in $ thousands',
+    M: 100,            // potential riders (k)
+    POOL: 10,          // potential drivers (k)
+    // rider utility
+    aU: 1.5,
+    bPrice: 0.25,      // per $ of price
+    thetaU: 3.6,       // indirect network effect: drivers -> riders (STRONG)
+    muMkt: 0.45,       // marketing effect, on ln(1 + m/100)
+    // driver utility
+    aP: -2.0,
+    bEarn: 0.6,        // per $ of incentive per trip
+    thetaP: 3.6,       // indirect network effect: riders -> drivers (STRONG)
+    h: 0.15,           // multihoming propensity of drivers (LOW)
+    // dynamics
+    kU: 0.45,          // share of the gap to target riders closed each round
+    kP: 0.6,
+    // economics
+    trips: 6,          // trips per rider per round
+    cap: 100,          // trips a driver can serve per round
+    basePay: 10,       // standard driver payout per trip (market rate), paid by the platform
+    fixed: 100,        // fixed operating cost per round
+    decisions: [
+      { key: 'price', label: 'Rider Price', unit: '$/trip', min: 11, max: 25, step: 0.5, def: 15 },
+      { key: 'incentive', label: 'Driver Incentive', unit: '$/trip', min: 0, max: 3, step: 0.25, def: 1 },
+      { key: 'marketing', label: 'Marketing Spend', unit: '$k/round', min: 0, max: 500, step: 10, def: 100 },
+    ],
+  },
+  browser: {
+    id: 'browser',
+    name: 'AI Browser',
+    userLabel: 'Users',
+    partnerLabel: 'Developers',
+    unitNote: 'users and developers in thousands; money in $ thousands',
+    M: 100,
+    POOL: 10,
+    aU: -0.8,
+    bPrice: 0.15,
+    thetaU: 0.6,       // WEAK
+    phiQ: 5.0,         // value of AI quality (dominant user-side driver)
+    aP: 0.3,
+    bDev: 0.8,         // on ln(1 + d/100)
+    thetaP: 1.0,       // WEAK
+    h: 0.85,           // HIGH multihoming
+    kU: 0.6,
+    kP: 0.7,
+    adRev: 4,          // non-fee revenue per user per round ($)
+    fixed: 50,
+    qDecay: 0.45,      // quality: Q_t = (1-d) Q_{t-1} + d * (1 - exp(-R/qScale))
+    qScale: 200,
+    decisions: [
+      { key: 'fee', label: 'Membership Fee', unit: '$/user/round', min: 0, max: 20, step: 0.5, def: 8 },
+      { key: 'dev', label: 'Developer Incentive', unit: '$k/round', min: 0, max: 300, step: 10, def: 50 },
+      { key: 'rnd', label: 'R&D Investment', unit: '$k/round', min: 0, max: 600, step: 10, def: 100 },
+    ],
+  },
+};
+
+const ROUNDS = 6;
+const IDS = ['A', 'B'];
+
+function clampDecision(market, d) {
+  const out = {};
+  for (const spec of MARKETS[market].decisions) {
+    let v = Number(d && d[spec.key]);
+    if (!Number.isFinite(v)) v = spec.def;
+    v = Math.min(spec.max, Math.max(spec.min, v));
+    v = Math.round(v / spec.step) * spec.step;
+    out[spec.key] = +v.toFixed(4);
+  }
+  return out;
+}
+
+function defaultDecision(market) {
+  const out = {};
+  for (const s of MARKETS[market].decisions) out[s.key] = s.def;
+  return out;
+}
+
+// ---- side-level response functions ----
+
+// Users choose A, B, or neither (multinomial logit).
+function userTargets(p, uA, uB) {
+  const eA = Math.exp(uA), eB = Math.exp(uB);
+  const den = 1 + eA + eB;
+  return { A: p.M * eA / den, B: p.M * eB / den };
+}
+
+// Partners: share h may join both platforms (independent binary logit per platform);
+// share 1-h must pick at most one (multinomial logit).
+function partnerTargets(p, wA, wB) {
+  const sig = (x) => 1 / (1 + Math.exp(-x));
+  const eA = Math.exp(wA), eB = Math.exp(wB);
+  const den = 1 + eA + eB;
+  const mhA = sig(wA), mhB = sig(wB);
+  return {
+    A: p.POOL * (p.h * mhA + (1 - p.h) * eA / den),
+    B: p.POOL * (p.h * mhB + (1 - p.h) * eB / den),
+    both: p.POOL * p.h * mhA * mhB,
+  };
+}
+
+function userUtility(market, p, d, partners, Q) {
+  if (market === 'ride') {
+    return p.aU - p.bPrice * d.price + p.thetaU * (partners / p.POOL) + p.muMkt * Math.log(1 + d.marketing / 100);
+  }
+  return p.aU - p.bPrice * d.fee + p.thetaU * (partners / p.POOL) + p.phiQ * Q;
+}
+
+function partnerUtility(market, p, d, users) {
+  if (market === 'ride') {
+    return p.aP + p.bEarn * d.incentive + p.thetaP * (users / p.M);
+  }
+  return p.aP + p.bDev * Math.log(1 + d.dev / 100) + p.thetaP * (users / p.M);
+}
+
+function qualityTarget(p, d) {
+  return 1 - Math.exp(-d.rnd / p.qScale);
+}
+
+function financials(market, p, d, users, partners) {
+  if (market === 'ride') {
+    const demand = p.trips * users;          // k trips
+    const capacity = p.cap * partners;
+    const served = Math.min(demand, capacity);
+    const revenue = served * d.price;            // fares collected
+    const driverPay = served * p.basePay;
+    const incentiveCost = served * d.incentive;
+    const costs = driverPay + incentiveCost + d.marketing + p.fixed;
+    return { demand, served, revenue, driverPay, incentiveCost, costs, profit: revenue - costs };
+  }
+  const revenue = users * (d.fee + p.adRev);
+  const costs = d.dev + d.rnd + p.fixed;
+  return { revenue, costs, profit: revenue - costs };
+}
+
+// ---- state ----
+
+function initialState(market) {
+  const p = MARKETS[market];
+  const d = defaultDecision(market);
+  // symmetric steady state under default decisions
+  let U = p.M / 3, P = p.POOL / 3, Q = market === 'browser' ? qualityTarget(p, d) : 0;
+  for (let i = 0; i < 500; i++) {
+    const u = userUtility(market, p, d, P, Q);
+    U = userTargets(p, u, u).A;
+    const w = partnerUtility(market, p, d, U);
+    P = partnerTargets(p, w, w).A;
+  }
+  const plat = () => ({ users: U, partners: P, quality: Q, cumProfit: 0 });
+  return { market, round: 0, A: plat(), B: plat(), history: [] };
+}
+
+// Advance one round given both decisions. Returns a NEW state (input untouched).
+// Timing: riders/users respond to the partners they saw LAST round; partners respond
+// to THIS round's users. Both sides only close part of the gap to their target (switching frictions).
+function step(state, decA, decB) {
+  const market = state.market;
+  const p = MARKETS[market];
+  const dec = { A: clampDecision(market, decA), B: clampDecision(market, decB) };
+  const prev = { A: state.A, B: state.B };
+
+  const Q = {};
+  for (const k of IDS) {
+    Q[k] = market === 'browser'
+      ? (1 - p.qDecay) * prev[k].quality + p.qDecay * qualityTarget(p, dec[k])
+      : 0;
+  }
+
+  const uA = userUtility(market, p, dec.A, prev.A.partners, Q.A);
+  const uB = userUtility(market, p, dec.B, prev.B.partners, Q.B);
+  const uT = userTargets(p, uA, uB);
+  const users = {};
+  for (const k of IDS) users[k] = prev[k].users + p.kU * (uT[k] - prev[k].users);
+
+  const wA = partnerUtility(market, p, dec.A, users.A);
+  const wB = partnerUtility(market, p, dec.B, users.B);
+  const pT = partnerTargets(p, wA, wB);
+  const partners = {};
+  for (const k of IDS) partners[k] = prev[k].partners + p.kP * (pT[k] - prev[k].partners);
+  const multihomers = Math.min(partners.A, partners.B, p.POOL * p.h * (1 / (1 + Math.exp(-wA))) * (1 / (1 + Math.exp(-wB))));
+
+  const totalUsers = users.A + users.B;
+  const next = { market, round: state.round + 1, history: state.history.slice() };
+  const rec = { round: next.round, multihomingPct: 100 * multihomers / Math.max(1e-9, Math.max(partners.A, partners.B)) };
+  for (const k of IDS) {
+    const fin = financials(market, p, dec[k], users[k], partners[k]);
+    const cumProfit = prev[k].cumProfit + fin.profit;
+    next[k] = { users: users[k], partners: partners[k], quality: Q[k], cumProfit };
+    rec[k] = {
+      decision: dec[k],
+      users: users[k],
+      partners: partners[k],
+      quality: Q[k],
+      share: totalUsers > 0 ? users[k] / totalUsers : 0.5,
+      reach: users[k] / p.M,
+      ...fin,
+      cumProfit,
+    };
+  }
+  next.history.push(rec);
+  return next;
+}
+
+module.exports = { MARKETS, ROUNDS, clampDecision, defaultDecision, initialState, step };
+
+return module.exports;})();
+;
+window.Bot = (function(){var module={exports:{}},exports=module.exports;var require=function(n){return {'./engine':window.Engine}[n];};
+// Computer rival. Decides from last round's public results only (never sees the student's current move).
+// Ride-sharing: fights while the race is close, gives up and harvests once clearly behind
+// (so an early push by the student can lock in the market, as the model intends).
+// AI browser: steadily builds quality (R&D toward 350) and adjusts its fee to its share.
+'use strict';
+const E = require('./engine');
+
+function botDecision(market, state, slot) {
+  const last = state.history[state.history.length - 1];
+  if (!last) return E.defaultDecision(market);
+  const me = last[slot], d = { ...me.decision }, sh = me.share;
+  if (market === 'ride') {
+    if (sh < 0.3) { d.price = Math.min(d.price + 1, 19); d.incentive -= 0.5; d.marketing -= 50; } // lost: harvest
+    else if (sh < 0.45) { d.price -= 0.5; d.incentive += 0.25; d.marketing += 30; }             // close: fight
+    else if (sh > 0.6) { d.price += 0.5; d.incentive -= 0.25; d.marketing -= 20; }              // ahead: cash in
+  } else {
+    d.rnd = Math.min(350, d.rnd + 60);
+    d.dev = Math.max(20, d.dev - 10);
+    if (sh < 0.4) d.fee -= 0.5; else if (sh > 0.6) d.fee += 0.5;
+  }
+  return E.clampDecision(market, d);
+}
+
+module.exports = { botDecision };
+
+return module.exports;})();
+;
+// Tiny SVG line chart: 2 series (You / Opponent), legend, end labels, hover crosshair + tooltip.
+'use strict';
+window.Charts = (function () {
+  const W = 460, H = 220, PAD = { l: 52, r: 74, t: 10, b: 28 };
+
+  function niceRange(lo, hi) {
+    if (lo === hi) { lo -= 1; hi += 1; }
+    const span = hi - lo, step0 = Math.pow(10, Math.floor(Math.log10(span / 4)));
+    const step = [1, 2, 2.5, 5, 10].map((m) => m * step0).find((s) => span / s <= 5) || step0 * 10;
+    return { lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step, step };
+  }
+
+  // opts: { title, rounds, series:[{name, cls, values:[...]}], fmt, yMin, yMax }
+  function line(el, opts) {
+    const n = opts.rounds;
+    const all = opts.series.flatMap((s) => s.values).filter((v) => v !== null && v !== undefined);
+    let lo = opts.yMin !== undefined ? opts.yMin : Math.min(0, ...all);
+    let hi = opts.yMax !== undefined ? opts.yMax : Math.max(...all);
+    const r = opts.yMin !== undefined && opts.yMax !== undefined ? { lo, hi, step: (hi - lo) / 4 } : niceRange(lo, hi);
+    const x = (i) => PAD.l + (n <= 1 ? 0 : (i * (W - PAD.l - PAD.r)) / (n - 1));
+    const y = (v) => PAD.t + (H - PAD.t - PAD.b) * (1 - (v - r.lo) / (r.hi - r.lo));
+    const fmt = opts.fmt || ((v) => v.toFixed(0));
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.title}">`;
+    for (let v = r.lo; v <= r.hi + 1e-9; v += r.step) {
+      svg += `<line class="${Math.abs(v) < 1e-9 && r.lo < 0 ? 'zero' : 'gridline'}" x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(v)}" y2="${y(v)}"/>`;
+      svg += `<text class="lbl" x="${PAD.l - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
+    }
+    for (let i = 0; i < n; i++) svg += `<text class="lbl" x="${x(i)}" y="${H - 8}" text-anchor="middle">${opts.xLabels ? opts.xLabels[i] : 'R' + (i + 1)}</text>`;
+    const ends = [];
+    for (const s of opts.series) {
+      const pts = s.values.map((v, i) => (v === null || v === undefined ? null : [x(i), y(v)])).filter(Boolean);
+      if (!pts.length) continue;
+      svg += `<polyline fill="none" stroke="var(--series-${s.cls})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map((p) => p.join(',')).join(' ')}"/>`;
+      for (const p of pts) svg += `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--series-${s.cls})" stroke="var(--surface-1)" stroke-width="2"/>`;
+      const last = pts[pts.length - 1];
+      ends.push({ y: last[1], x: last[0], text: s.name, cls: s.cls });
+    }
+    // de-collide end labels
+    ends.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14;
+    for (const e of ends) svg += `<text class="lbl" x="${e.x + 8}" y="${e.y + 4}" style="fill:var(--text-secondary)">${e.text}</text>`;
+    svg += `<line class="cross" x1="0" x2="0" y1="${PAD.t}" y2="${H - PAD.b}" style="display:none"/>`;
+    svg += `<rect class="hit" x="${PAD.l - 10}" y="0" width="${W - PAD.l - PAD.r + 20}" height="${H}" fill="transparent"/>`;
+    svg += '</svg>';
+    const legend = opts.series.map((s) => `<span><span class="swatch sw-${s.cls}"></span>${s.name}</span>`).join('');
+    el.innerHTML = `<h3>${opts.title}</h3><div class="chart"><div class="legend">${legend}</div>${svg}<div class="tip"></div></div>`;
+
+    const box = el.querySelector('.chart'), svgEl = box.querySelector('svg'), tip = box.querySelector('.tip'), cross = svgEl.querySelector('.cross');
+    function move(ev) {
+      const pt = svgEl.getBoundingClientRect();
+      const cx = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - pt.left) * (W / pt.width);
+      let i = Math.round(((cx - PAD.l) / (W - PAD.l - PAD.r)) * (n - 1));
+      i = Math.max(0, Math.min(n - 1, i));
+      const rows = opts.series.filter((s) => s.values[i] !== null && s.values[i] !== undefined);
+      if (!rows.length) return hide();
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.style.display = '';
+      tip.innerHTML = `<b>${opts.xLabels ? opts.xLabels[i] : 'Round ' + (i + 1)}</b><br>` + rows.map((s) => `<span class="swatch sw-${s.cls}"></span>${s.name}: ${fmt(s.values[i])}`).join('<br>');
+      tip.style.display = 'block';
+      const px = (x(i) / W) * pt.width;
+      tip.style.left = Math.min(pt.width - tip.offsetWidth, Math.max(0, px + 12)) + 'px';
+      tip.style.top = '30px';
+    }
+    function hide() { tip.style.display = 'none'; cross.style.display = 'none'; }
+    const hit = svgEl.querySelector('.hit');
+    hit.addEventListener('mousemove', move); hit.addEventListener('touchstart', move, { passive: true });
+    hit.addEventListener('mouseleave', hide);
+  }
+  return { line };
+})();
+
+;
+// All student-facing text in one place (easy to edit).
+'use strict';
+window.CONTENT = {
+  intro: {
+    ride: {
+      title: 'Market: Ride-Sharing',
+      body: `
+<p>You run a ride-hailing app in a mid-sized city. A rival app has launched at the same time. There are about
+<b>100,000 potential riders</b> and <b>10,000 potential drivers</b>. Each round is one month.</p>
+<p><b>Riders</b> care about the fare and about how quickly a car shows up — and that depends on how many drivers are
+active on your app. <b>Drivers</b> care about how much they earn and how many trip requests they get.</p>
+<p>Most drivers work for <b>one app at a time</b>: juggling two apps between trips is a hassle, and apps reward loyal drivers.
+Riders usually stick with the app they are used to, but will switch if waits get long or prices rise.</p>
+<p><b>How you make money:</b> you collect the fare for every trip, and pay the driver a standard <b>$10 per trip</b> plus any
+extra incentive you offer. Marketing and a fixed $100k/month in operating costs come on top.</p>
+<p class="note">Timing: riders this month react to how many drivers you had <b>last</b> month (that is the waiting time they
+experienced). Drivers react to how many riders you have <b>this</b> month.</p>`,
+    },
+    browser: {
+      title: 'Market: AI-Powered Web Browsers',
+      body: `
+<p>You run an AI-powered web browser. A rival browser has launched at the same time. There are about
+<b>100,000 potential users</b> and <b>10,000 potential extension developers</b>. Each round is one month.</p>
+<p><b>Users</b> choose a browser mainly for the quality of its AI assistant, its speed and its reliability. Extensions are
+nice to have, but most people use only a handful.</p>
+<p><b>Developers</b> can port an extension to another browser at low cost, so many publish on <b>several browsers at once</b>.</p>
+<p><b>How you make money:</b> a monthly membership fee for premium AI features, plus about <b>$4 per user per month</b> from
+search and partnerships. Your costs are developer support, R&amp;D, and $50k/month fixed costs.</p>
+<p class="note">R&amp;D builds AI quality <b>gradually</b>: quality accumulates over several months and fades if you stop
+investing. Each extra dollar of R&amp;D buys less quality than the previous one.</p>`,
+    },
+  },
+  help: {
+    price: { up: 'more revenue on every trip', down: 'riders leave for your rival or stop riding' },
+    incentive: { up: 'attracts and keeps drivers → shorter waits for riders next month', down: 'paid on every trip you serve' },
+    marketing: { up: 'brings in riders this month', down: 'cash out the door; each extra $ brings fewer riders' },
+    fee: { up: 'more revenue per user', down: 'users leave for your rival or drop out' },
+    dev: { up: 'more extensions available on your browser', down: 'fixed cash cost every month' },
+    rnd: { up: 'better AI quality — builds up over months', down: 'fixed cash cost; diminishing returns' },
+  },
+  reflection: [
+    'Why did one platform gain (or fail to gain) market dominance in your game?',
+    'Did aggressive pricing and incentives increase your long-term profit? Why or why not?',
+    'How did your rival’s decisions change your strategy over the rounds?',
+    'How did the other side of the market (drivers / developers) respond to your choices — and to your rival’s?',
+    'Would the strategy you used work equally well in the other market? What would you change?',
+  ],
+};
+
+;
+// Solo version: one student vs the computer, everything runs in the browser (no server).
+// Progress is kept in localStorage, so a refresh resumes the game.
+'use strict';
+(function () {
+  const $app = document.getElementById('app');
+  const C = window.CONTENT, E = window.Engine, Bot = window.Bot;
+  const KEY = 'pw_solo_v1';
+  const OPP = 'Computer rival';
+  function store() {
+    try { const s = window.localStorage; s.setItem('_t', '1'); s.removeItem('_t'); return s; }
+    catch { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: (k) => { delete m[k]; } }; }
+  }
+  const LS = store();
+  let G = null; // saved game
+  try { G = JSON.parse(LS.getItem(KEY) || 'null'); } catch { G = null; }
+  const save = () => LS.setItem(KEY, JSON.stringify(G));
+  const drafts = {};
+  let view = null;
+
+  // ---------- formatting ----------
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const k = (v) => `${v.toFixed(1)}k`;
+  const money = (v) => `${v < 0 ? '−' : ''}$${Math.abs(Math.round(v)).toLocaleString()}k`;
+  const pct = (v) => `${(100 * v).toFixed(1)}%`;
+  const pp = (v) => `${(100 * v).toFixed(1)} pp`;
+  const signed = (v, f) => (v > 0 ? '+' : v < 0 ? '−' : '±') + String(f(Math.abs(v))).replace('−', '');
+  function decFmt(spec, v) {
+    if (spec.unit.startsWith('$k')) return `$${Math.round(v)}k`;
+    return `$${Number(v).toFixed(2).replace(/\.00$/, '')}`;
+  }
+
+  // ---------- game logic (local) ----------
+  // Market assignment: ?m=ride | browser | both ; otherwise a random one of the two (kept for this device).
+  function pickMarkets() {
+    const m = (new URLSearchParams(location.search).get('m') || '').toLowerCase();
+    if (m === 'ride' || m === 'browser') return [m];
+    if (m === 'both') return Math.random() < 0.5 ? ['ride', 'browser'] : ['browser', 'ride'];
+    return [Math.random() < 0.5 ? 'ride' : 'browser'];
+  }
+  function newGame(name) {
+    const markets = pickMarkets();
+    G = { name, markets, games: {}, ack: { intro: {}, seen: {}, summary: {} }, startedAt: Date.now() };
+    for (const m of markets) G.games[m] = E.initialState(m);
+    save();
+  }
+  function phase() {
+    for (const m of G.markets) {
+      const st = G.games[m];
+      if (!G.ack.intro[m]) return { phase: 'intro', market: m };
+      if (st.round > (G.ack.seen[m] || 0)) return { phase: 'results', market: m };
+      if (st.round < E.ROUNDS) return { phase: 'decide', market: m };
+      if (!G.ack.summary[m]) return { phase: 'summary', market: m };
+    }
+    return { phase: 'final', market: null };
+  }
+  function pick(r) {
+    return { decision: r.decision, users: r.users, partners: r.partners, quality: r.quality, share: r.share,
+      revenue: r.revenue, costs: r.costs, profit: r.profit, cumProfit: r.cumProfit, served: r.served, demand: r.demand };
+  }
+  function buildView() {
+    const markets = G.markets.map((m) => {
+      const st = G.games[m], p = E.MARKETS[m], init = E.initialState(m);
+      return {
+        spec: { id: m, name: p.name, userLabel: p.userLabel, partnerLabel: p.partnerLabel, M: p.M, POOL: p.POOL, decisions: p.decisions },
+        round: st.round,
+        history: st.history.map((r) => ({ round: r.round, multihomingPct: r.multihomingPct, me: pick(r.A), opp: pick(r.B) })),
+        initial: { me: { users: init.A.users, partners: init.A.partners } },
+        current: { me: st.A, opp: st.B },
+      };
+    });
+    return { ...phase(), me: { name: G.name }, opponent: OPP, rounds: E.ROUNDS, markets };
+  }
+  function submit(market, decision) {
+    const st = G.games[market];
+    const botMove = Bot.botDecision(market, st, 'B');
+    G.games[market] = E.step(st, decision, botMove);
+    save();
+  }
+  function ack(kind, market) {
+    if (kind === 'seen') G.ack.seen[market] = G.games[market].round; else G.ack[kind][market] = true;
+    save(); render();
+  }
+
+  // ---------- render dispatch ----------
+  function render() {
+    if (!G) return welcome();
+    view = buildView();
+    window.scrollTo(0, 0);
+    ({ intro, decide, results, summary, final })[view.phase]();
+  }
+  function mk() { return view.markets.find((m) => m.spec.id === view.market); }
+  function header(m) {
+    const idx = view.markets.findIndex((x) => x.spec.id === m.spec.id);
+    const multi = view.markets.length > 1 ? `<span class="badge">Market ${idx + 1} of ${view.markets.length}</span>` : '';
+    return `<div class="topbar"><span class="title">Platform Wars</span>${multi}<span class="badge">${esc(m.spec.name)}</span>
+      <span class="spacer"></span><span class="small secondary">${esc(view.me.name)} vs <b>${OPP}</b></span></div>`;
+  }
+
+  function welcome() {
+    $app.innerHTML = `
+<div class="narrow" style="margin:0 auto">
+  <h1>Platform Wars</h1>
+  <p class="secondary">A simulation of competing two-sided platforms.</p>
+  <div class="card">
+    <p>You will run a platform that serves <b>two groups of customers</b> — for example riders <i>and</i> drivers —
+    against a <b>computer-run rival</b>. Each round you both set prices and investments <b>at the same time</b>, without seeing
+    the other’s choices. Then the market responds and both results are revealed.</p>
+    <p class="small muted">Six rounds. Your goal: the highest <b>cumulative profit</b>. No account needed; your progress is saved on this device.</p>
+  </div>
+  <div class="card">
+    <label for="name">Your name</label>
+    <input type="text" id="name" maxlength="30" placeholder="So your instructor can match your results" autocomplete="off">
+    <button class="primary big" id="go">Start</button>
+    <div class="err" id="err"></div>
+  </div>
+</div>`;
+    const go = () => {
+      const name = document.getElementById('name').value.trim().replace(/\s+/g, ' ');
+      if (!name) { document.getElementById('err').textContent = 'Please enter your name.'; return; }
+      newGame(name.slice(0, 30)); render();
+    };
+    document.getElementById('go').onclick = go;
+    document.getElementById('name').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    document.getElementById('name').focus();
+  }
+
+  function intro() {
+    const m = mk(), t = C.intro[m.spec.id];
+    const dec = m.spec.decisions.map((d) => `<tr><td>${esc(d.label)}</td><td>${decFmt(d, d.min)} – ${decFmt(d, d.max)} <span class="muted">${esc(d.unit)}</span></td>
+      <td><b>↑</b> ${C.help[d.key].up}<br><b>↓</b> ${C.help[d.key].down}</td></tr>`).join('');
+    $app.innerHTML = `${header(m)}<div class="card"><h2>${t.title}</h2>${t.body}</div>
+      <div class="card"><h3>Your three decisions each round</h3><div class="tablewrap"><table>
+      <tr><th>Decision</th><th>Range</th><th style="text-align:left">Benefit / cost</th></tr>${dec}</table></div>
+      <p class="small muted" style="margin-top:8px">You and the <b>${OPP}</b> start in identical positions. Six rounds. Highest cumulative profit wins.
+      The rival reacts to past results, but never sees your current decision.</p>
+      <button class="primary big" id="go">Start market</button></div>`;
+    document.getElementById('go').onclick = () => ack('intro', m.spec.id);
+  }
+
+  function tiles(m) {
+    const c = m.current.me, h = m.history, last = h[h.length - 1];
+    const share = last ? last.me.share : 0.5;
+    const quality = m.spec.id === 'browser' ? `<div class="tile"><div class="k">AI quality</div><div class="v">${Math.round(100 * c.quality)}</div><div class="d">index 0–100</div></div>` : '';
+    return `<div class="tiles">
+      <div class="tile"><div class="k">${m.spec.userLabel}</div><div class="v">${k(c.users)}</div><div class="d">of ${m.spec.M}k potential</div></div>
+      <div class="tile"><div class="k">${m.spec.partnerLabel}</div><div class="v">${k(c.partners)}</div><div class="d">of ${m.spec.POOL}k potential</div></div>
+      <div class="tile"><div class="k">Market share</div><div class="v">${pct(share)}</div><div class="d">of users on the two platforms</div></div>
+      <div class="tile"><div class="k">Cumulative profit</div><div class="v ${c.cumProfit < 0 ? 'neg' : ''}">${money(c.cumProfit)}</div><div class="d">rival: ${money(m.current.opp.cumProfit)}</div></div>
+      ${quality}</div>`;
+  }
+
+  function decide() {
+    const m = mk(), round = m.round + 1, dk = `${m.spec.id}:${round}`;
+    const last = m.history[m.history.length - 1];
+    const start = drafts[dk] || (last ? { ...last.me.decision } : Object.fromEntries(m.spec.decisions.map((d) => [d.key, d.def])));
+    const rows = m.spec.decisions.map((d) => `
+      <div class="decision">
+        <div class="head"><span class="name">${esc(d.label)}</span><span class="small muted">${esc(d.unit)}</span><span class="val" id="v_${d.key}"></span></div>
+        <input type="range" id="r_${d.key}" min="${d.min}" max="${d.max}" step="${d.step}" value="${start[d.key]}" aria-label="${esc(d.label)}">
+        <div class="range"><span>${decFmt(d, d.min)}</span><span>default ${decFmt(d, d.def)}</span><span>${decFmt(d, d.max)}</span></div>
+        <div class="pros"><b>↑</b> ${C.help[d.key].up} &nbsp;·&nbsp; <b>↓</b> ${C.help[d.key].down}<span id="x_${d.key}"></span></div>
+      </div>`).join('');
+    $app.innerHTML = `${header(m)}<h2>Round ${round} of ${view.rounds}</h2>${tiles(m)}
+      <div class="card"><h3>Your decisions for round ${round}</h3>${rows}
+        <button class="primary big" id="submit">Submit decision</button>
+        <p class="small muted">Once submitted, your decision is locked and the round is played.</p>
+      </div>
+      ${m.history.length ? '<div class="card" id="hist"></div>' : ''}`;
+    const cur = { ...start };
+    const sync = () => {
+      for (const d of m.spec.decisions) {
+        cur[d.key] = Number(document.getElementById('r_' + d.key).value);
+        document.getElementById('v_' + d.key).textContent = decFmt(d, cur[d.key]);
+      }
+      if (m.spec.id === 'ride') document.getElementById('x_price').innerHTML = `<br><span class="muted">Your margin per trip: $${(cur.price - 10 - cur.incentive).toFixed(2)} (fare − $10 base pay − incentive)</span>`;
+      drafts[dk] = { ...cur };
+    };
+    for (const d of m.spec.decisions) document.getElementById('r_' + d.key).addEventListener('input', sync);
+    sync();
+    if (m.history.length) historyTable(document.getElementById('hist'), m, 'Previous rounds');
+    document.getElementById('submit').onclick = () => {
+      const summary = m.spec.decisions.map((d) => `${d.label}: ${decFmt(d, cur[d.key])}`).join('\n');
+      if (!confirm(`Submit round ${round}?\n\n${summary}`)) return;
+      submit(m.spec.id, cur);
+      $app.innerHTML = `${header(m)}<div class="card waiting"><h2>Decision locked for round ${round}</h2>
+        <p class="secondary">The market is responding<span class="dots"></span></p></div>`;
+      window.scrollTo(0, 0);
+      setTimeout(render, 900);
+    };
+  }
+
+  function results() {
+    const m = mk(), h = m.history, cur = h[h.length - 1];
+    $app.innerHTML = `${header(m)}<h2>Results — round ${cur.round} of ${view.rounds}</h2>
+      <div class="card" id="tbl"></div>
+      <div class="grid2"><div class="card" id="c1"></div><div class="card" id="c2"></div></div>
+      <button class="primary big" id="next">${cur.round < view.rounds ? `Continue to round ${cur.round + 1}` : 'See market summary'}</button>`;
+    roundTable(document.getElementById('tbl'), m, h.length - 1);
+    charts(m);
+    document.getElementById('next').onclick = () => ack('seen', m.spec.id);
+  }
+
+  function summary() {
+    const m = mk(), last = m.history[m.history.length - 1];
+    const won = last.me.cumProfit > last.opp.cumProfit;
+    const isLast = view.markets[view.markets.length - 1].spec.id === m.spec.id;
+    $app.innerHTML = `${header(m)}<h2>${esc(m.spec.name)} — final results</h2>
+      <div class="tiles">
+        <div class="tile"><div class="k">Your final share</div><div class="v">${pct(last.me.share)}</div><div class="d">rival ${pct(last.opp.share)}</div></div>
+        <div class="tile"><div class="k">Your cumulative profit</div><div class="v ${last.me.cumProfit < 0 ? 'neg' : ''}">${money(last.me.cumProfit)}</div><div class="d">rival ${money(last.opp.cumProfit)}</div></div>
+        <div class="tile"><div class="k">Outcome</div><div class="v">${won ? 'You earned more' : last.me.cumProfit === last.opp.cumProfit ? 'Tie' : 'Rival earned more'}</div></div>
+      </div>
+      <div class="grid2"><div class="card" id="c1"></div><div class="card" id="c2"></div></div>
+      <div class="card" id="hist"></div>
+      <button class="primary big" id="next">${isLast ? 'See final results' : 'Continue to the next market'}</button>`;
+    charts(m);
+    historyTable(document.getElementById('hist'), m, 'All rounds');
+    document.getElementById('next').onclick = () => ack('summary', m.spec.id);
+  }
+
+  function final() {
+    const rows = view.markets.map((m) => {
+      const l = m.history[m.history.length - 1];
+      return `<tr><td>${esc(m.spec.name)}</td><td>${pct(l.me.share)}</td><td>${pct(l.opp.share)}</td><td>${money(l.me.cumProfit)}</td><td>${money(l.opp.cumProfit)}</td><td>${l.multihomingPct.toFixed(0)}%</td></tr>`;
+    }).join('');
+    const split = view.markets.length === 1;
+    $app.innerHTML = `<div class="topbar"><span class="title">Platform Wars</span><span class="badge">Finished</span><span class="spacer"></span>
+      <span class="small secondary">${esc(view.me.name)} vs <b>${OPP}</b></span></div>
+      <h1>Final results</h1>
+      <div class="card"><div class="tablewrap"><table>
+        <tr><th>Market</th><th>Your share</th><th>Rival share</th><th>Your profit</th><th>Rival profit</th><th>Partners on both platforms</th></tr>${rows}</table></div>
+        ${split ? `<p class="small muted" style="margin-top:8px">Part of the class played the other market. Your instructor will compare the two markets in the debrief.</p>` : ''}
+      </div>
+      <div class="grid2" id="finalCharts"></div>
+      <div class="card"><h3>Reflection</h3><ol class="reflect">${C.reflection.map((q) => `<li>${q}</li>`).join('')}</ol></div>
+      <div class="row"><button class="primary" id="csv">Download my results (CSV)</button><span class="spacer"></span><button id="again">Play again</button></div>`;
+    const wrap = document.getElementById('finalCharts');
+    for (const m of view.markets) {
+      const div = document.createElement('div'); div.className = 'card'; wrap.appendChild(div);
+      Charts.line(div, { title: `${m.spec.name}: market share`, rounds: view.rounds, yMin: 0, yMax: 100, fmt: (v) => v.toFixed(0) + '%',
+        series: [{ name: 'You', cls: 'me', values: m.history.map((h) => 100 * h.me.share) }, { name: OPP, cls: 'opp', values: m.history.map((h) => 100 * h.opp.share) }] });
+    }
+    document.getElementById('csv').onclick = downloadCsv;
+    document.getElementById('again').onclick = () => {
+      if (!confirm('Start a new game? Download your results first if you need them.')) return;
+      LS.removeItem(KEY); G = null; render();
+    };
+  }
+
+  // ---------- CSV (same columns as the classroom server version) ----------
+  function downloadCsv() {
+    const DEC = ['price', 'incentive', 'marketing', 'fee', 'dev', 'rnd'];
+    const head = ['player', 'market', 'round', 'slot', 'who', ...DEC, 'users_k', 'partners_k', 'market_share', 'quality', 'trips_served_k', 'revenue_k', 'costs_k', 'profit_k', 'cum_profit_k', 'partner_multihoming_pct'];
+    const cell = (v) => {
+      if (v === undefined || v === null) return '';
+      if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(4);
+      const t = String(v); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+    };
+    const rows = [head];
+    for (const m of G.markets) for (const rec of G.games[m].history) for (const s of ['A', 'B']) {
+      const r = rec[s];
+      rows.push([G.name, m, rec.round, s, s === 'A' ? 'student' : 'computer', ...DEC.map((d) => r.decision[d]), r.users, r.partners, r.share,
+        m === 'browser' ? r.quality : '', r.served === undefined ? '' : r.served, r.revenue, r.costs, r.profit, r.cumProfit, rec.multihomingPct]);
+    }
+    const csv = '﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `platform-wars-${G.name.replace(/[^\w-]/g, '_') || 'results'}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  // ---------- shared pieces ----------
+  function charts(m) {
+    const padv = (arr) => { const a = arr.slice(); while (a.length < view.rounds) a.push(null); return a; };
+    Charts.line(document.getElementById('c1'), { title: 'Market share', rounds: view.rounds, yMin: 0, yMax: 100, fmt: (v) => v.toFixed(0) + '%',
+      series: [{ name: 'You', cls: 'me', values: padv(m.history.map((h) => 100 * h.me.share)) }, { name: OPP, cls: 'opp', values: padv(m.history.map((h) => 100 * h.opp.share)) }] });
+    Charts.line(document.getElementById('c2'), { title: 'Cumulative profit ($k)', rounds: view.rounds, fmt: (v) => Math.round(v).toLocaleString(),
+      series: [{ name: 'You', cls: 'me', values: padv(m.history.map((h) => h.me.cumProfit)) }, { name: OPP, cls: 'opp', values: padv(m.history.map((h) => h.opp.cumProfit)) }] });
+  }
+
+  function roundTable(el, m, i) {
+    const cur = m.history[i], prev = i > 0 ? m.history[i - 1] : null;
+    const init = m.initial.me;
+    const base = (who) => (prev ? prev[who] : { users: init.users, partners: init.partners, share: 0.5, profit: null, cumProfit: 0 });
+    const cell = (who, f, field, fmtD) => {
+      const v = cur[who][field], b = base(who)[field];
+      const d = b === null || b === undefined ? '' : `<span class="delta">${signed(v - b, fmtD || f)}</span>`;
+      return `<td>${f(v)}${d}</td>`;
+    };
+    const decRows = m.spec.decisions.map((d) => `<tr><td>${esc(d.label)}</td><td>${decFmt(d, cur.me.decision[d.key])}</td><td>${decFmt(d, cur.opp.decision[d.key])}</td></tr>`).join('');
+    const q = m.spec.id === 'browser' ? `<tr><td>AI quality (0–100)</td>${cell('me', (v) => Math.round(100 * v), 'quality', (v) => Math.round(100 * v))}${cell('opp', (v) => Math.round(100 * v), 'quality', (v) => Math.round(100 * v))}</tr>` : '';
+    const served = m.spec.id === 'ride' ? `<tr><td>Trips served / requested</td><td>${Math.round(cur.me.served)}k / ${Math.round(cur.me.demand)}k</td><td>${Math.round(cur.opp.served)}k / ${Math.round(cur.opp.demand)}k</td></tr>` : '';
+    el.innerHTML = `<div class="tablewrap"><table>
+      <tr><th></th><th><span class="swatch sw-me"></span>You</th><th><span class="swatch sw-opp"></span>${OPP}</th></tr>
+      ${decRows}
+      <tr><td>${m.spec.userLabel}</td>${cell('me', k, 'users')}${cell('opp', k, 'users')}</tr>
+      <tr><td>${m.spec.partnerLabel}</td>${cell('me', k, 'partners')}${cell('opp', k, 'partners')}</tr>
+      <tr><td>Market share</td>${cell('me', pct, 'share', pp)}${cell('opp', pct, 'share', pp)}</tr>
+      ${q}${served}
+      <tr><td>Revenue</td><td>${money(cur.me.revenue)}</td><td>${money(cur.opp.revenue)}</td></tr>
+      <tr><td>Costs</td><td>${money(cur.me.costs)}</td><td>${money(cur.opp.costs)}</td></tr>
+      <tr><td><b>Profit this round</b></td>${cell('me', money, 'profit')}${cell('opp', money, 'profit')}</tr>
+      <tr><td><b>Cumulative profit</b></td><td><b>${money(cur.me.cumProfit)}</b></td><td><b>${money(cur.opp.cumProfit)}</b></td></tr>
+      </table></div>
+      <p class="small muted" style="margin-top:8px">${cur.multihomingPct.toFixed(0)}% of ${m.spec.partnerLabel.toLowerCase()} on the larger platform also work with the other one. Small grey numbers show the change from the previous round.</p>`;
+  }
+
+  function historyTable(el, m, title) {
+    const decH = m.spec.decisions.map((d) => `<th>${esc(d.label)}</th>`).join('');
+    const rows = m.history.map((h) => `<tr><td>R${h.round}</td>${m.spec.decisions.map((d) => `<td>${decFmt(d, h.me.decision[d.key])}<span class="delta">rival ${decFmt(d, h.opp.decision[d.key])}</span></td>`).join('')}
+      <td>${pct(h.me.share)}</td><td>${money(h.me.profit)}<span class="delta">rival ${money(h.opp.profit)}</span></td><td>${money(h.me.cumProfit)}</td></tr>`).join('');
+    el.innerHTML = `<h3>${title}</h3><div class="tablewrap"><table><tr><th>Round</th>${decH}<th>Your share</th><th>Profit</th><th>Cumulative</th></tr>${rows}</table></div>`;
+  }
+
+  render();
+})();
+
+</script>
+</body>
+</html>
