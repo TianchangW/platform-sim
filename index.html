@@ -135,6 +135,8 @@ ol.reflect li { margin-bottom: 8px; }
   th, td { padding: 6px 5px; font-size: 13px; }
   .tile .v { font-size: 20px; }
 }
+.facts { margin: 0 0 10px; padding-left: 20px; }
+.facts li { margin-bottom: 6px; }
 
 </style>
 </head>
@@ -464,47 +466,41 @@ window.Charts = (function () {
 window.CONTENT = {
   intro: {
     ride: {
-      title: 'Market: Ride-Sharing',
+      title: 'Ride-Sharing',
       body: `
-<p>You run a ride-hailing app in a mid-sized city. A rival app has launched at the same time. There are about
-<b>100,000 potential riders</b> and <b>10,000 potential drivers</b>. Each round is one month.</p>
-<p><b>Riders</b> care about the fare and about how quickly a car shows up — and that depends on how many drivers are
-active on your app. <b>Drivers</b> care about how much they earn and how many trip requests they get.</p>
-<p>Most drivers work for <b>one app at a time</b>: juggling two apps between trips is a hassle, and apps reward loyal drivers.
-Riders usually stick with the app they are used to, but will switch if waits get long or prices rise.</p>
-<p><b>How you make money:</b> you collect the fare for every trip, and pay the driver a standard <b>$10 per trip</b> plus any
-extra incentive you offer. Marketing and a fixed $100k/month in operating costs come on top.</p>
-<p class="note">Timing: riders this month react to how many drivers you had <b>last</b> month (that is the waiting time they
-experienced). Drivers react to how many riders you have <b>this</b> month.</p>`,
+<p>You run a ride-hailing app against one rival. Market: <b>100k riders</b>, <b>10k drivers</b>. One round = one month.</p>
+<ul class="facts">
+<li><b>Riders</b> want low fares and short waits. Waits depend on how many drivers you had <b>last</b> month.</li>
+<li><b>Drivers</b> want extra pay and lots of trips. Most drive for <b>only one app</b>.</li>
+<li><b>Per trip</b> you keep the fare, minus <b>$10</b> driver pay and your incentive. Also pay marketing + <b>$100k</b>/month fixed.</li>
+</ul>`,
     },
     browser: {
-      title: 'Market: AI-Powered Web Browsers',
+      title: 'AI Browser',
       body: `
-<p>You run an AI-powered web browser. A rival browser has launched at the same time. There are about
-<b>100,000 potential users</b> and <b>10,000 potential extension developers</b>. Each round is one month.</p>
-<p><b>Users</b> choose a browser mainly for the quality of its AI assistant, its speed and its reliability. Extensions are
-nice to have, but most people use only a handful.</p>
-<p><b>Developers</b> can port an extension to another browser at low cost, so many publish on <b>several browsers at once</b>.</p>
-<p><b>How you make money:</b> a monthly membership fee for premium AI features, plus about <b>$4 per user per month</b> from
-search and partnerships. Your costs are developer support, R&amp;D, and $50k/month fixed costs.</p>
-<p class="note">R&amp;D builds AI quality <b>gradually</b>: quality accumulates over several months and fades if you stop
-investing. Each extra dollar of R&amp;D buys less quality than the previous one.</p>`,
+<p>You run an AI web browser against one rival. Market: <b>100k users</b>, <b>10k extension developers</b>. One round = one month.</p>
+<ul class="facts">
+<li><b>Users</b> pick mainly on <b>AI quality</b>. Extensions matter a little.</li>
+<li><b>Developers</b> often publish on <b>both</b> browsers.</li>
+<li><b>Per user</b> you earn the fee + <b>$4</b>. Costs: developer support, R&amp;D, <b>$50k</b>/month fixed.</li>
+<li><b>R&amp;D</b> builds quality slowly, fades if you stop, and each extra dollar helps less.</li>
+</ul>`,
     },
   },
+  // Shown under each slider: what raising it does (+) and what it costs (−).
   help: {
-    price: { up: 'more revenue on every trip', down: 'riders leave for your rival or stop riding' },
-    incentive: { up: 'attracts and keeps drivers → shorter waits for riders next month', down: 'paid on every trip you serve' },
-    marketing: { up: 'brings in riders this month', down: 'cash out the door; each extra $ brings fewer riders' },
-    fee: { up: 'more revenue per user', down: 'users leave for your rival or drop out' },
-    dev: { up: 'more extensions available on your browser', down: 'fixed cash cost every month' },
-    rnd: { up: 'better AI quality — builds up over months', down: 'fixed cash cost; diminishing returns' },
+    price: { up: 'more $ per trip', down: 'fewer riders' },
+    incentive: { up: 'more drivers → shorter waits', down: 'paid on every trip' },
+    marketing: { up: 'more riders now', down: 'cash; diminishing returns' },
+    fee: { up: 'more $ per user', down: 'fewer users' },
+    dev: { up: 'more extensions', down: 'cash every month' },
+    rnd: { up: 'better AI (builds slowly)', down: 'cash; diminishing returns' },
   },
   reflection: [
-    'Why did one platform gain (or fail to gain) market dominance in your game?',
-    'Did aggressive pricing and incentives increase your long-term profit? Why or why not?',
-    'How did your rival’s decisions change your strategy over the rounds?',
-    'How did the other side of the market (drivers / developers) respond to your choices — and to your rival’s?',
-    'Would the strategy you used work equally well in the other market? What would you change?',
+    'Why did one platform win (or not win) the market?',
+    'Did aggressive pricing and subsidies pay off in profit?',
+    'How did drivers / developers respond to your choices?',
+    'Would your strategy work in the other market?',
   ],
 };
 
@@ -533,6 +529,7 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
   const k = (v) => `${v.toFixed(1)}k`;
   const money = (v) => `${v < 0 ? '−' : ''}$${Math.abs(Math.round(v)).toLocaleString()}k`;
   const pct = (v) => `${(100 * v).toFixed(1)}%`;
+  const money1 = (v) => `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(2)}`;
   const pp = (v) => `${(100 * v).toFixed(1)} pp`;
   const signed = (v, f) => (v > 0 ? '+' : v < 0 ? '−' : '±') + String(f(Math.abs(v))).replace('−', '');
   function decFmt(spec, v) {
@@ -611,16 +608,10 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
     $app.innerHTML = `
 <div class="narrow" style="margin:0 auto">
   <h1>Platform Wars</h1>
-  <p class="secondary">A simulation of competing two-sided platforms.</p>
-  <div class="card">
-    <p>You will run a platform that serves <b>two groups of customers</b> — for example riders <i>and</i> drivers —
-    against a <b>computer-run rival</b>. Each round you both set prices and investments <b>at the same time</b>, without seeing
-    the other’s choices. Then the market responds and both results are revealed.</p>
-    <p class="small muted">Six rounds. Your goal: the highest <b>cumulative profit</b>. No account needed; your progress is saved on this device.</p>
-  </div>
+  <p class="secondary">Run a two-sided platform against a computer rival. 6 rounds. Goal: highest <b>total profit</b>.</p>
   <div class="card">
     <label for="name">Your name</label>
-    <input type="text" id="name" maxlength="30" placeholder="So your instructor can match your results" autocomplete="off">
+    <input type="text" id="name" maxlength="30" placeholder="Your name" autocomplete="off">
     <button class="primary big" id="go">Start</button>
     <div class="err" id="err"></div>
   </div>
@@ -637,14 +628,9 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
 
   function intro() {
     const m = mk(), t = C.intro[m.spec.id];
-    const dec = m.spec.decisions.map((d) => `<tr><td>${esc(d.label)}</td><td>${decFmt(d, d.min)} – ${decFmt(d, d.max)} <span class="muted">${esc(d.unit)}</span></td>
-      <td><b>↑</b> ${C.help[d.key].up}<br><b>↓</b> ${C.help[d.key].down}</td></tr>`).join('');
-    $app.innerHTML = `${header(m)}<div class="card"><h2>${t.title}</h2>${t.body}</div>
-      <div class="card"><h3>Your three decisions each round</h3><div class="tablewrap"><table>
-      <tr><th>Decision</th><th>Range</th><th style="text-align:left">Benefit / cost</th></tr>${dec}</table></div>
-      <p class="small muted" style="margin-top:8px">You and the <b>${OPP}</b> start in identical positions. Six rounds. Highest cumulative profit wins.
-      The rival reacts to past results, but never sees your current decision.</p>
-      <button class="primary big" id="go">Start market</button></div>`;
+    $app.innerHTML = `${header(m)}<div class="card"><h2>${t.title}</h2>${t.body}
+      <p class="small muted">Each round you set 3 decisions; the rival decides at the same time without seeing yours.</p>
+      <button class="primary big" id="go">Start</button></div>`;
     document.getElementById('go').onclick = () => ack('intro', m.spec.id);
   }
 
@@ -655,7 +641,7 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
     return `<div class="tiles">
       <div class="tile"><div class="k">${m.spec.userLabel}</div><div class="v">${k(c.users)}</div><div class="d">of ${m.spec.M}k potential</div></div>
       <div class="tile"><div class="k">${m.spec.partnerLabel}</div><div class="v">${k(c.partners)}</div><div class="d">of ${m.spec.POOL}k potential</div></div>
-      <div class="tile"><div class="k">Market share</div><div class="v">${pct(share)}</div><div class="d">of users on the two platforms</div></div>
+      <div class="tile"><div class="k">Market share</div><div class="v">${pct(share)}</div><div class="d">vs rival</div></div>
       <div class="tile"><div class="k">Cumulative profit</div><div class="v ${c.cumProfit < 0 ? 'neg' : ''}">${money(c.cumProfit)}</div><div class="d">rival: ${money(m.current.opp.cumProfit)}</div></div>
       ${quality}</div>`;
   }
@@ -668,13 +654,12 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
       <div class="decision">
         <div class="head"><span class="name">${esc(d.label)}</span><span class="small muted">${esc(d.unit)}</span><span class="val" id="v_${d.key}"></span></div>
         <input type="range" id="r_${d.key}" min="${d.min}" max="${d.max}" step="${d.step}" value="${start[d.key]}" aria-label="${esc(d.label)}">
-        <div class="range"><span>${decFmt(d, d.min)}</span><span>default ${decFmt(d, d.def)}</span><span>${decFmt(d, d.max)}</span></div>
-        <div class="pros"><b>↑</b> ${C.help[d.key].up} &nbsp;·&nbsp; <b>↓</b> ${C.help[d.key].down}<span id="x_${d.key}"></span></div>
+        <div class="range"><span>${decFmt(d, d.min)}</span><span>${decFmt(d, d.max)}</span></div>
+        <div class="pros">Higher: <span class="pos">+ ${C.help[d.key].up}</span> &nbsp; <span class="neg">− ${C.help[d.key].down}</span><span id="x_${d.key}"></span></div>
       </div>`).join('');
     $app.innerHTML = `${header(m)}<h2>Round ${round} of ${view.rounds}</h2>${tiles(m)}
-      <div class="card"><h3>Your decisions for round ${round}</h3>${rows}
+      <div class="card">${rows}
         <button class="primary big" id="submit">Submit decision</button>
-        <p class="small muted">Once submitted, your decision is locked and the round is played.</p>
       </div>
       ${m.history.length ? '<div class="card" id="hist"></div>' : ''}`;
     const cur = { ...start };
@@ -683,7 +668,7 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
         cur[d.key] = Number(document.getElementById('r_' + d.key).value);
         document.getElementById('v_' + d.key).textContent = decFmt(d, cur[d.key]);
       }
-      if (m.spec.id === 'ride') document.getElementById('x_price').innerHTML = `<br><span class="muted">Your margin per trip: $${(cur.price - 10 - cur.incentive).toFixed(2)} (fare − $10 base pay − incentive)</span>`;
+      if (m.spec.id === 'ride') document.getElementById('x_price').innerHTML = `<br><span class="muted">Margin per trip: ${money1(cur.price - 10 - cur.incentive)}</span>`;
       drafts[dk] = { ...cur };
     };
     for (const d of m.spec.decisions) document.getElementById('r_' + d.key).addEventListener('input', sync);
@@ -694,7 +679,7 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
       if (!confirm(`Submit round ${round}?\n\n${summary}`)) return;
       submit(m.spec.id, cur);
       $app.innerHTML = `${header(m)}<div class="card waiting"><h2>Decision locked for round ${round}</h2>
-        <p class="secondary">The market is responding<span class="dots"></span></p></div>`;
+        <p class="secondary">Playing the round<span class="dots"></span></p></div>`;
       window.scrollTo(0, 0);
       setTimeout(render, 900);
     };
@@ -732,19 +717,21 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
   function final() {
     const rows = view.markets.map((m) => {
       const l = m.history[m.history.length - 1];
-      return `<tr><td>${esc(m.spec.name)}</td><td>${pct(l.me.share)}</td><td>${pct(l.opp.share)}</td><td>${money(l.me.cumProfit)}</td><td>${money(l.opp.cumProfit)}</td><td>${l.multihomingPct.toFixed(0)}%</td></tr>`;
+      return `<tr><td colspan="3"><b>${esc(m.spec.name)}</b></td></tr>
+        <tr><td>Share</td><td>${pct(l.me.share)}</td><td>${pct(l.opp.share)}</td></tr>
+        <tr><td>Total profit</td><td>${money(l.me.cumProfit)}</td><td>${money(l.opp.cumProfit)}</td></tr>`;
     }).join('');
     const split = view.markets.length === 1;
     $app.innerHTML = `<div class="topbar"><span class="title">Platform Wars</span><span class="badge">Finished</span><span class="spacer"></span>
       <span class="small secondary">${esc(view.me.name)} vs <b>${OPP}</b></span></div>
       <h1>Final results</h1>
       <div class="card"><div class="tablewrap"><table>
-        <tr><th>Market</th><th>Your share</th><th>Rival share</th><th>Your profit</th><th>Rival profit</th><th>Partners on both platforms</th></tr>${rows}</table></div>
-        ${split ? `<p class="small muted" style="margin-top:8px">Part of the class played the other market. Your instructor will compare the two markets in the debrief.</p>` : ''}
+        <tr><th></th><th><span class="swatch sw-me"></span>You</th><th><span class="swatch sw-opp"></span>Rival</th></tr>${rows}</table></div>
+        ${split ? `<p class="small muted" style="margin-top:8px">Others played the other market — we compare in class.</p>` : ''}
       </div>
       <div class="grid2" id="finalCharts"></div>
-      <div class="card"><h3>Reflection</h3><ol class="reflect">${C.reflection.map((q) => `<li>${q}</li>`).join('')}</ol></div>
-      <div class="row"><button class="primary" id="csv">Download my results (CSV)</button><span class="spacer"></span><button id="again">Play again</button></div>`;
+      <div class="card"><h3>Think about</h3><ol class="reflect">${C.reflection.map((q) => `<li>${q}</li>`).join('')}</ol></div>
+      <div class="row"><button class="primary" id="csv">Download results (CSV)</button><span class="spacer"></span><button id="again">Play again</button></div>`;
     const wrap = document.getElementById('finalCharts');
     for (const m of view.markets) {
       const div = document.createElement('div'); div.className = 'card'; wrap.appendChild(div);
@@ -813,15 +800,17 @@ investing. Each extra dollar of R&amp;D buys less quality than the previous one.
       <tr><td><b>Profit this round</b></td>${cell('me', money, 'profit')}${cell('opp', money, 'profit')}</tr>
       <tr><td><b>Cumulative profit</b></td><td><b>${money(cur.me.cumProfit)}</b></td><td><b>${money(cur.opp.cumProfit)}</b></td></tr>
       </table></div>
-      <p class="small muted" style="margin-top:8px">${cur.multihomingPct.toFixed(0)}% of ${m.spec.partnerLabel.toLowerCase()} on the larger platform also work with the other one. Small grey numbers show the change from the previous round.</p>`;
+      <p class="small muted" style="margin-top:8px">Grey = change from last round. ${cur.multihomingPct.toFixed(0)}% of ${m.spec.partnerLabel.toLowerCase()} use both platforms.</p>`;
   }
 
   function historyTable(el, m, title) {
-    const decH = m.spec.decisions.map((d) => `<th>${esc(d.label)}</th>`).join('');
-    const rows = m.history.map((h) => `<tr><td>R${h.round}</td>${m.spec.decisions.map((d) => `<td>${decFmt(d, h.me.decision[d.key])}<span class="delta">rival ${decFmt(d, h.opp.decision[d.key])}</span></td>`).join('')}
-      <td>${pct(h.me.share)}</td><td>${money(h.me.profit)}<span class="delta">rival ${money(h.opp.profit)}</span></td><td>${money(h.me.cumProfit)}</td></tr>`).join('');
-    el.innerHTML = `<h3>${title}</h3><div class="tablewrap"><table><tr><th>Round</th>${decH}<th>Your share</th><th>Profit</th><th>Cumulative</th></tr>${rows}</table></div>`;
+    const SHORT = { price: 'Price', incentive: 'Incent.', marketing: 'Mktg', fee: 'Fee', dev: 'Dev', rnd: 'R&D' };
+    const moves = (dec) => m.spec.decisions.map((d) => decFmt(d, dec[d.key])).join(' · ');
+    const rows = m.history.map((h) => `<tr><td>R${h.round}</td><td>${moves(h.me.decision)}<span class="delta">rival ${moves(h.opp.decision)}</span></td>
+      <td>${pct(h.me.share)}</td><td>${money(h.me.profit)}<span class="delta">rival ${money(h.opp.profit)}</span></td></tr>`).join('');
+    el.innerHTML = `<h3>${title}</h3><div class="tablewrap"><table><tr><th></th><th>${m.spec.decisions.map((d) => SHORT[d.key]).join(' · ')}</th><th>Share</th><th>Profit</th></tr>${rows}</table></div>`;
   }
+
 
   render();
 })();
