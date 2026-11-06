@@ -506,18 +506,17 @@ window.CONTENT = {
 
 ;
 // Solo version: one student vs the computer, everything runs in the browser (no server).
-// Progress is kept in localStorage, so a refresh resumes the game.
+// Progress is kept in memory only: a refresh or reopening the page starts a new game.
 'use strict';
 (function () {
   const $app = document.getElementById('app');
   const C = window.CONTENT, E = window.Engine, Bot = window.Bot;
   const KEY = 'pw_solo_v1';
   const OPP = 'Computer rival';
-  function store() {
-    try { const s = window.localStorage; s.setItem('_t', '1'); s.removeItem('_t'); return s; }
-    catch { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: (k) => { delete m[k]; } }; }
-  }
-  const LS = store();
+  // Clear saves left by earlier versions that used localStorage.
+  try { window.localStorage.removeItem(KEY); } catch { /* storage unavailable */ }
+  const mem = {};
+  const LS = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: (k) => { delete mem[k]; } };
   let G = null; // saved game
   try { G = JSON.parse(LS.getItem(KEY) || 'null'); } catch { G = null; }
   const save = () => LS.setItem(KEY, JSON.stringify(G));
@@ -538,7 +537,7 @@ window.CONTENT = {
   }
 
   // ---------- game logic (local) ----------
-  // Market assignment: ?m=ride | browser | both ; otherwise a random one of the two (kept for this device).
+  // Market assignment: ?m=ride | browser | both ; otherwise a random one of the two.
   function pickMarkets() {
     const m = (new URLSearchParams(location.search).get('m') || '').toLowerCase();
     if (m === 'ride' || m === 'browser') return [m];
