@@ -674,8 +674,6 @@ window.CONTENT = {
     sync();
     if (m.history.length) historyTable(document.getElementById('hist'), m, 'Previous rounds');
     document.getElementById('submit').onclick = () => {
-      const summary = m.spec.decisions.map((d) => `${d.label}: ${decFmt(d, cur[d.key])}`).join('\n');
-      if (!confirm(`Submit round ${round}?\n\n${summary}`)) return;
       submit(m.spec.id, cur);
       $app.innerHTML = `${header(m)}<div class="card waiting"><h2>Decision locked for round ${round}</h2>
         <p class="secondary">Playing the round<span class="dots"></span></p></div>`;
